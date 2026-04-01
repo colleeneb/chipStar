@@ -1,4 +1,5 @@
 # this include allows us to reference defaults in anl/ci-resource/defaults
+
 include:
   - project: 'anl/ci-resources/defaults'
     ref: main
@@ -9,7 +10,6 @@ include:
 workflow:
     rules:
       - if: $CI_PIPELINE_SOURCE == "trigger"   # triggered from GitHub via /run-aurora-ci
-#      - if: $CI_COMMIT_BRANCH == "main"
 
 variables:
   PROJ: "chipStar_test"
