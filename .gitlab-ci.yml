@@ -48,7 +48,7 @@ setup:
     - mkdir -p ${WRK_DIR}
     - cd ${WRK_DIR}
       # setup chipStar
-    - git clone --single-branch --branch ${CI_COMMIT_BRANCH} https://github.com/CHIP-SPV/chipStar.git
+    - git clone --single-branch --branch ${CI_COMMIT_BRANCH} https://github.com/colleeneb/chipStar.git
     - cd chipStar
     - git checkout ${CI_COMMIT_SHA}
     - git submodule update --init --recursive
@@ -315,7 +315,7 @@ cleanup:
       curl -X POST \
         -H "Authorization: token ${GITHUB_TOKEN}" \
         -H "Accept: application/vnd.github.v3+json" \
-        https://api.github.com/repos/CHIP-SPV/chipStar/statuses/${GITHUB_SHA} \
+        https://api.github.com/repos/colleeneb/chipStar/statuses/${GITHUB_SHA} \
         -d "{\"state\":\"${GITHUB_STATUS}\",\"context\":\"aurora-ci\",\"target_url\":\"${CI_PIPELINE_URL}\"}"
 
 report_success:
