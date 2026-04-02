@@ -1,21 +1,21 @@
 # this include allows us to reference defaults in anl/ci-resource/defaults
+
 include:
   - project: 'anl/ci-resources/defaults'
     ref: main
     file:
       - '/runners.yml'
 
-# only run on commits to main, otherwise it may be too much for the queue system.
 workflow:
     rules:
       - if: $CI_PIPELINE_SOURCE == "trigger"   # triggered from GitHub via /run-aurora-ci
-#      - if: $CI_COMMIT_BRANCH == "main"
+      - if: $CI_COMMIT_BRANCH == "main"
 
 variables:
   PROJ: "chipStar_test"
   QUEUE: "debug"
   TIME: "1:00:00"
-  WRK_DIR: "/lus/flare/projects/${PROJ}/chipStar/test"
+  WRK_DIR: "/lus/flare/projects/${PROJ}/chipStar/pipeline_${CI_PIPELINE_ID}"
   ANL_AURORA_SCHEDULER_PARAMETERS: "-q ${QUEUE} -l select=1,walltime=${TIME},filesystems=home -A ${PROJ}"
   GENESIS_CI_PROJECT_DIR: "/home/bertoni/projects/p01.chipStar/GENESIS-Share-CI/"
 
@@ -36,19 +36,21 @@ stages:
     - builds_zeroRK
     - runs_zeroRK
     - perforamce_zeroRK
+    - cleanup
 
 setup:
   stage: .pre
   extends: .aurora-shell-runner
   resource_group: aurora_pipeline  
   script:
-    # FIXME: For the time being we delete ${WRK_DIR} if it exists.
-    - rm -rf ${WRK_DIR}
+    # Remove pipeline directories older than 7 days
+    - find /lus/flare/projects/${PROJ}/chipStar -maxdepth 1 -name "pipeline_*" -mtime +7 -exec rm -rf {} \;
     - mkdir -p ${WRK_DIR}
     - cd ${WRK_DIR}
       # setup chipStar
-    - git clone --single-branch https://github.com/CHIP-SPV/chipStar.git
+    - git clone --single-branch --branch ${CI_COMMIT_BRANCH} https://github.com/CHIP-SPV/chipStar.git
     - cd chipStar
+    - git checkout ${CI_COMMIT_SHA}
     - git submodule update --init --recursive
     - module list
 
@@ -292,3 +294,38 @@ zeroRK_performance:
       exit 1
     fi
   allow_failure: true  
+
+cleanup:
+  stage: cleanup
+  extends: .aurora-shell-runner
+  resource_group: aurora_pipeline
+  when: on_success
+  script:
+    - rm -rf ${WRK_DIR}
+
+.report_github_status:
+  stage: cleanup
+  extends: .aurora-shell-runner
+  script:
+    - |
+      if [ -z "${GITHUB_SHA}" ]; then
+        echo "No GITHUB_SHA set, skipping GitHub status report"
+        exit 0
+      fi
+      curl -X POST \
+        -H "Authorization: token ${GITHUB_TOKEN}" \
+        -H "Accept: application/vnd.github.v3+json" \
+        https://api.github.com/repos/CHIP-SPV/chipStar/statuses/${GITHUB_SHA} \
+        -d "{\"state\":\"${GITHUB_STATUS}\",\"context\":\"aurora-ci\",\"target_url\":\"${CI_PIPELINE_URL}\"}"
+
+report_success:
+  extends: .report_github_status
+  when: on_success
+  variables:
+    GITHUB_STATUS: "success"
+
+report_failure:
+  extends: .report_github_status
+  when: on_failure
+  variables:
+    GITHUB_STATUS: "failure"
