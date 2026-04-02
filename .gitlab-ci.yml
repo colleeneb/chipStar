@@ -48,9 +48,11 @@ setup:
     - mkdir -p ${WRK_DIR}
     - cd ${WRK_DIR}
       # setup chipStar
-    - git clone --single-branch --branch ${CI_COMMIT_BRANCH} https://github.com/colleeneb/chipStar.git
+    - BRANCH=${GITHUB_REF:-${CI_COMMIT_BRANCH}}
+    - SHA=${GITHUB_SHA:-${CI_COMMIT_SHA}}
+    - git clone --single-branch --branch ${BRANCH} https://github.com/colleeneb/chipStar.git
     - cd chipStar
-    - git checkout ${CI_COMMIT_SHA}
+    - git checkout ${SHA}
     - git submodule update --init --recursive
     - module list
 

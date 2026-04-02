@@ -48,7 +48,7 @@ jobs:
           curl -X POST --fail-with-body \
             "${GITLAB_URL}/api/v4/projects/${GITLAB_PROJECT_ID}/trigger/pipeline" \
             -F "token=${GITLAB_TRIGGER_TOKEN}" \
-            -F "ref=${{ steps.pr-info.outputs.ref }}" \
+            -F "ref=main" \
             -F "variables[TRIGGER_SOURCE]=github_comment" \
             -F "variables[GITHUB_PR_NUMBER]=${{ github.event.issue.number }}" \
             -F "variables[GITHUB_SHA]=${{ steps.pr-info.outputs.sha }}" \
