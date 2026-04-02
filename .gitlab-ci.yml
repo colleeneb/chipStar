@@ -86,7 +86,7 @@ chipStar_script_install:
   script:
     - hostname
     - echo "Running on $(hostname) with setuid shell runner"
-    - cp -r ${WRK_DIR}/chipStar  ${WRK_DIR}/chipStar_llvm19
+    - cp -r ${WRK_DIR}/chipStar ${WRK_DIR}/chipStar_llvm19
     - cd ${WRK_DIR}/chipStar_llvm19
     - module use /soft/modulefiles
     - module load cmake chipStar/.llvm19/20251107-19/release
@@ -141,7 +141,9 @@ chipStar_aurora_script_test:
   script:
     - hostname
     - echo "Running on $(hostname) with setuid shell runner"
-    - temp=${WRK_DIR}/script_llvm19/ MODULE_INSTALL_DIR=${WRK_DIR}/modulefiles CHIPSTAR_INSTALL_DIR=${WRK_DIR}/latest_llvm19/ /lus/flare/projects/Aurora_deployment/bertoni/projects/p02.chipStar/chip-star-patch.sh release chipStar/.llvm19/20251107-19/release
+    - mkdir ${WRK_DIR}/script_llvm19
+    - cp -r ${WRK_DIR}/chipStar ${WRK_DIR}/script_llvm19
+    - NO_FRESH_CHIPSTAR_PULL=true temp=${WRK_DIR}/script_llvm19 MODULE_INSTALL_DIR=${WRK_DIR}/modulefiles CHIPSTAR_INSTALL_DIR=${WRK_DIR}/latest_llvm19/ /lus/flare/projects/Aurora_deployment/bertoni/projects/p02.chipStar/chip-star-patch.sh release chipStar/.llvm19/20251107-19/release
     - cd ${WRK_DIR}/modulefiles/chipStar
     - echo 'module_version("llvm19", "default")' > .modulerc.lua
   allow_failure: true
@@ -153,7 +155,7 @@ chipStar_aurora_script_test_run:
   script:
     - hostname
     - echo "Running on $(hostname) with setuid shell runner"
-    - cd ${WRK_DIR}/script_llvm19/chip-spv/build
+    - cd ${WRK_DIR}/script_llvm19/chipStar/build
     - rm -rf $HOME/.cache/chipStar
     - CHIP_BE=level0 make build_tests -j
     - module load cmake
@@ -167,7 +169,9 @@ chipStar_aurora_script_test_llvm22:
   script:
     - hostname
     - echo "Running on $(hostname) with setuid shell runner"
-    - llvm_version=22 temp=${WRK_DIR}/script_llvm_22/ MODULE_INSTALL_DIR=${WRK_DIR}/modulefiles CHIPSTAR_INSTALL_DIR=${WRK_DIR}/latest_llvm22/ LLVM_INSTALL_DIR=${WRK_DIR}/llvm22 /lus/flare/projects/Aurora_deployment/bertoni/projects/p02.chipStar/chip-star-patch.sh release
+    - mkdir ${WRK_DIR}/script_llvm_22
+    - cp -r ${WRK_DIR}/chipStar ${WRK_DIR}/script_llvm_22
+    - NO_FRESH_CHIPSTAR_PULL=true llvm_version=22 temp=${WRK_DIR}/script_llvm_22/ MODULE_INSTALL_DIR=${WRK_DIR}/modulefiles CHIPSTAR_INSTALL_DIR=${WRK_DIR}/latest_llvm22/ LLVM_INSTALL_DIR=${WRK_DIR}/llvm22 /lus/flare/projects/Aurora_deployment/bertoni/projects/p02.chipStar/chip-star-patch.sh release
   allow_failure: true
   
 chipStar_aurora_script_test_llvm22_run:
@@ -177,7 +181,7 @@ chipStar_aurora_script_test_llvm22_run:
   script:
     - hostname
     - echo "Running on $(hostname) with setuid shell runner"
-    - cd ${WRK_DIR}/script_llvm_22/chip-spv/build
+    - cd ${WRK_DIR}/script_llvm_22/chipStar/build
     - module load cmake
     - rm -rf $HOME/.cache/chipStar
     - CHIP_BE=level0 make build_tests -j
