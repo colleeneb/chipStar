@@ -50,6 +50,7 @@ setup:
       # setup chipStar
     - BRANCH=${GITHUB_REF:-${CI_COMMIT_BRANCH}}
     - SHA=${GITHUB_SHA:-${CI_COMMIT_SHA}}
+    - echo "Branch ${BRANCH} and commit ${SHA}"
     - git clone --single-branch --branch ${BRANCH} https://github.com/colleeneb/chipStar.git
     - cd chipStar
     - git checkout ${SHA}
