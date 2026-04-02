@@ -9,7 +9,6 @@ include:
 workflow:
     rules:
       - if: $CI_PIPELINE_SOURCE == "trigger"   # triggered from GitHub via /run-aurora-ci
-      - if: $CI_COMMIT_BRANCH == "main"
 
 variables:
   PROJ: "chipStar_test"
