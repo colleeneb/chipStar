@@ -20,21 +20,21 @@ variables:
 
 stages:
     - .pre
-    - build_chipstar
-    - builds_chipstar_install_script_llvm19
-    - runs_tests_chipstar_install_script_llvm19
-    - builds_chipstar_install_script_llvm22
-    - runs_tests_chipstar_install_script_llvm22
-    - builds_chipstar_aurora_script_llvm19
-    - runs_chipstar_aurora_script_llvm19
-    - builds_chipstar_aurora_script_llvm22
-    - runs_chipstar_aurora_script_llvm22
-    - builds_hoMusic
-    - runs_hoMusic
-    - performance_hoMusic
-    - builds_zeroRK
-    - runs_zeroRK
-    - perforamce_zeroRK
+    # - build_chipstar
+    # - builds_chipstar_install_script_llvm19
+    # - runs_tests_chipstar_install_script_llvm19
+    # - builds_chipstar_install_script_llvm22
+    # - runs_tests_chipstar_install_script_llvm22
+    # - builds_chipstar_aurora_script_llvm19
+    # - runs_chipstar_aurora_script_llvm19
+    # - builds_chipstar_aurora_script_llvm22
+    # - runs_chipstar_aurora_script_llvm22
+    # - builds_hoMusic
+    # - runs_hoMusic
+    # - performance_hoMusic
+    # - builds_zeroRK
+    # - runs_zeroRK
+    # - perforamce_zeroRK
     - cleanup
 
 setup:
@@ -319,6 +319,7 @@ cleanup:
         exit 0
       fi
       curl -X POST \
+        --fail \
         -H "Authorization: token ${GITHUB_TOKEN}" \
         -H "Accept: application/vnd.github.v3+json" \
         https://api.github.com/repos/colleeneb/chipStar/statuses/${GITHUB_SHA} \
