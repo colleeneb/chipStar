@@ -6,16 +6,16 @@ include:
     file:
       - '/runners.yml'
 
-# only run on commits to main, otherwise it may be too much for the queue system.
 workflow:
     rules:
       - if: $CI_PIPELINE_SOURCE == "trigger"   # triggered from GitHub via /run-aurora-ci
+      - if: $CI_COMMIT_BRANCH == "main"
 
 variables:
   PROJ: "chipStar_test"
   QUEUE: "debug"
   TIME: "1:00:00"
-  WRK_DIR: "/lus/flare/projects/${PROJ}/chipStar/test"
+  WRK_DIR: "/lus/flare/projects/${PROJ}/chipStar/pipeline_${CI_PIPELINE_ID}"
   ANL_AURORA_SCHEDULER_PARAMETERS: "-q ${QUEUE} -l select=1,walltime=${TIME},filesystems=home -A ${PROJ}"
   GENESIS_CI_PROJECT_DIR: "/home/bertoni/projects/p01.chipStar/GENESIS-Share-CI/"
 
@@ -36,19 +36,21 @@ stages:
     - builds_zeroRK
     - runs_zeroRK
     - perforamce_zeroRK
+    - cleanup
 
 setup:
   stage: .pre
   extends: .aurora-shell-runner
   resource_group: aurora_pipeline  
   script:
-    # FIXME: For the time being we delete ${WRK_DIR} if it exists.
-    - rm -rf ${WRK_DIR}
+    # Remove pipeline directories older than 7 days
+    - find /lus/flare/projects/${PROJ}/chipStar -maxdepth 1 -name "pipeline_*" -mtime +7 -exec rm -rf {} \;
     - mkdir -p ${WRK_DIR}
     - cd ${WRK_DIR}
       # setup chipStar
-    - git clone --single-branch https://github.com/CHIP-SPV/chipStar.git
+    - git clone --single-branch --branch ${CI_COMMIT_BRANCH} https://github.com/CHIP-SPV/chipStar.git
     - cd chipStar
+    - git checkout ${CI_COMMIT_SHA}
     - git submodule update --init --recursive
     - module list
 
@@ -292,3 +294,11 @@ zeroRK_performance:
       exit 1
     fi
   allow_failure: true  
+
+cleanup:
+  stage: cleanup
+  extends: .aurora-shell-runner
+  resource_group: aurora_pipeline
+  when: on_success
+  script:
+    - rm -rf ${WRK_DIR}
