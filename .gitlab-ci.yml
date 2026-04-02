@@ -20,6 +20,11 @@ variables:
 
 stages:
     - .pre
+    - build_chipstar
+    - builds_chipstar_install_script_llvm19
+    - runs_tests_chipstar_install_script_llvm19
+    - builds_chipstar_install_script_llvm22
+    - runs_tests_chipstar_install_script_llvm22
     - cleanup
 
 setup:
@@ -40,6 +45,83 @@ setup:
     - git checkout ${SHA}
     - git submodule update --init --recursive
     - module list
+
+# testing with hand script
+aurora_build_test:
+  stage: build_chipstar
+  resource_group: aurora_pipeline  
+  extends: .aurora-shell-runner
+  script:
+    - hostname
+    - echo "Running on $(hostname) with setuid shell runner"
+    - cd ${WRK_DIR}/chipStar
+    # first test with already installed clang. will update to patch and build
+    - module use /soft/modulefiles
+    - module load cmake chipStar/.llvm19/20251107-19/release
+    - rm -rf build
+    - mkdir build
+    - cd build
+    - cmake -DCMAKE_BUILD_TYPE=Release -DCHIP_BUILD_SAMPLES=ON -DCMAKE_INSTALL_PREFIX=${WRK_DIR}/install_aurora ..
+    - gitcommit=$(git rev-parse HEAD)
+    - make -j48
+    - make install
+    - cd ..
+    - rm -rf build
+
+# testing with install script
+chipStar_script_install:
+  stage: builds_chipstar_install_script_llvm19
+  resource_group: aurora_pipeline  
+  extends: .aurora-shell-runner
+  script:
+    - hostname
+    - echo "Running on $(hostname) with setuid shell runner"
+    - cp -r ${WRK_DIR}/chipStar ${WRK_DIR}/chipStar_llvm19
+    - cd ${WRK_DIR}/chipStar_llvm19
+    - module use /soft/modulefiles
+    - module load cmake chipStar/.llvm19/20251107-19/release
+    - ./install_chipstar.py --all --install-dir ${WRK_DIR}/install/ --staging-dir $PWD/stage
+  allow_failure: true
+  
+chipStar_script_test:
+  stage: runs_tests_chipstar_install_script_llvm19
+  resource_group: aurora_pipeline  
+  extends: .aurora-batch-runner
+  script:
+    - cd ${WRK_DIR}/chipStar_llvm19/build
+    - module use /soft/modulefiles
+    - module load cmake chipStar/.llvm19/20251107-19/release
+    - rm -rf $HOME/.cache/chipStar
+    - CHIP_BE=level0 make build_tests -j
+    - CHIP_MODULE_CACHE_DIR="" ZE_AFFINITY_MASK=0.0 ../scripts/check.py ./ dgpu level0 --timeout 60 --num-tries=1 --num-threads=1
+  allow_failure: true
+
+chipStar_script_install_llvm22:
+  stage: builds_chipstar_install_script_llvm22
+  resource_group: aurora_pipeline  
+  extends: .aurora-shell-runner
+  script:
+    - hostname
+    - echo "Running on $(hostname) with setuid shell runner"
+    - cp -r ${WRK_DIR}/chipStar  ${WRK_DIR}/chipStar_llvm22
+    - cd ${WRK_DIR}/chipStar_llvm22
+    - module use /soft/modulefiles
+    - module load cmake chipStar/.llvm22/20260311-22/release
+    - ./install_chipstar.py --all --install-dir ${WRK_DIR}/install/ --staging-dir $PWD/stage
+  allow_failure: true
+
+chipStar_script_test_llvm22:
+  stage: runs_tests_chipstar_install_script_llvm22
+  resource_group: aurora_pipeline  
+  extends: .aurora-batch-runner
+  script:
+    - cd ${WRK_DIR}/chipStar_llvm22/build
+    - module use /soft/modulefiles
+    - module load cmake chipStar/.llvm22/20260311-22/release
+    - rm -rf $HOME/.cache/chipStar
+    - CHIP_BE=level0 make build_tests -j
+    - CHIP_MODULE_CACHE_DIR="" ZE_AFFINITY_MASK=0.0 ../scripts/check.py ./ dgpu level0 --timeout 60 --num-tries=1 --num-threads=1
+  allow_failure: true
 
 cleanup:
   stage: cleanup
